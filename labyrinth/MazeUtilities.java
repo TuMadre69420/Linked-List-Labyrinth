@@ -1,4 +1,5 @@
 package labyrinth;
+
 import java.util.*;
 
 public class MazeUtilities {
@@ -22,49 +23,60 @@ public class MazeUtilities {
     public static boolean isPathToFreedom(MazeCell start, String moves) {
         MazeCell curr = start;
         Set<String> items = new HashSet<String>();
-        
+
         /* Fencepost issue: pick up items from starting location, if any. */
-        if (!start.whatsHere.equals("")) items.add(start.whatsHere);
-        
-        for (char ch: moves.toCharArray()) {
+        if (!start.whatsHere.equals(""))
+            items.add(start.whatsHere);
+
+        for (char ch : moves.toCharArray()) {
             /* Take a step. */
-            if      (ch == 'N') curr = curr.north;
-            else if (ch == 'S') curr = curr.south;
-            else if (ch == 'E') curr = curr.east;
-            else if (ch == 'W') curr = curr.west;
-            else return false; // Unknown character?
-            
+            if (ch == 'N')
+                curr = curr.north;
+            else if (ch == 'S')
+                curr = curr.south;
+            else if (ch == 'E')
+                curr = curr.east;
+            else if (ch == 'W')
+                curr = curr.west;
+            else
+                return false; // Unknown character?
+
             /* Was that illegal? */
-            if (curr == null) return false;
-            
+            if (curr == null)
+                return false;
+
             /* Did we get anything? */
-            if (!curr.whatsHere.equals("")) items.add(curr.whatsHere);
+            if (!curr.whatsHere.equals(""))
+                items.add(curr.whatsHere);
         }
-        
+
         /* Do we have all three items? */
         return items.size() == 3;
     }
-    
-    /* Simple rolling hash. Stolen shameless from StanfordCPPLib, maintained by a collection
-     * of talented folks at Stanford University. We use this hash implementation to ensure
+
+    /*
+     * Simple rolling hash. Stolen shameless from StanfordCPPLib, maintained by a
+     * collection
+     * of talented folks at Stanford University. We use this hash implementation to
+     * ensure
      * consistency from run to run and across systems.
      */
-    private static final int HASH_SEED = 5381;       // Starting point for first cycle
-    private static final int HASH_MULTIPLIER = 33;   // Multiplier for each cycle
+    private static final int HASH_SEED = 5381; // Starting point for first cycle
+    private static final int HASH_MULTIPLIER = 33; // Multiplier for each cycle
     private static final int HASH_MASK = 0x7FFFFFFF; // All 1 bits except the sign
-    
+
     private static int hashCode(int value) {
         return value & HASH_MASK;
     }
-    
+
     private static int hashCode(String str) {
         int hash = HASH_SEED;
-        for (char ch: str.toCharArray()) {
+        for (char ch : str.toCharArray()) {
             hash = HASH_MULTIPLIER * hash + ch;
         }
         return hashCode(hash);
     }
-    
+
     /*
      * Computes a composite hash code from a list of multiple values.
      * The components are scaled up so as to spread out the range of values
@@ -72,7 +84,7 @@ public class MazeUtilities {
      */
     private static int hashCode(String str, int... values) {
         int result = hashCode(str);
-        for (int value: values) {
+        for (int value : values) {
             result = result * HASH_MULTIPLIER + value;
         }
         return hashCode(result);
@@ -81,7 +93,7 @@ public class MazeUtilities {
     /* Size of a normal maze. */
     private static final int NUM_ROWS = 4;
     private static final int NUM_COLS = 4;
-    
+
     /* Size of a twisty maze. */
     private static final int TWISTY_MAZE_SIZE = 12;
 
@@ -96,22 +108,23 @@ public class MazeUtilities {
      * the maze you solved wasn't the maze we wanted you to solve!
      */
     public static MazeCell mazeFor(String name) {
-        /* Java Random is guaranteed to produce the same sequence of values across
+        /*
+         * Java Random is guaranteed to produce the same sequence of values across
          * all systems with the same seed.
          */
         Random generator = new Random(hashCode(name, NUM_ROWS, NUM_COLS));
         MazeCell[][] maze = makeMaze(NUM_ROWS, NUM_COLS, generator);
-        
+
         List<MazeCell> linearMaze = new ArrayList<MazeCell>();
         for (int row = 0; row < maze.length; row++) {
             for (int col = 0; col < maze[0].length; col++) {
                 linearMaze.add(maze[row][col]);
             }
         }
-        
+
         int[][] distances = allPairsShortestPaths(linearMaze);
-        int[]   locations = remoteLocationsIn(distances);
-        
+        int[] locations = remoteLocationsIn(distances);
+
         /* Place the items. */
         linearMaze.get(locations[1]).whatsHere = "Spellbook";
         linearMaze.get(locations[2]).whatsHere = "Potion";
@@ -129,7 +142,8 @@ public class MazeUtilities {
      * the maze you solved wasn't the maze we wanted you to solve!
      */
     public static MazeCell twistyMazeFor(String name) {
-        /* Java Random is guaranteed to produce the same sequence of values across
+        /*
+         * Java Random is guaranteed to produce the same sequence of values across
          * all systems with the same seed.
          */
         Random generator = new Random(hashCode(name, TWISTY_MAZE_SIZE));
@@ -138,7 +152,8 @@ public class MazeUtilities {
         /* Find the distances between all pairs of nodes. */
         int[][] distances = allPairsShortestPaths(maze);
 
-        /* Select a 4-tuple maximizing the minimum distances between points,
+        /*
+         * Select a 4-tuple maximizing the minimum distances between points,
          * and use that as our item/start locations.
          */
         int[] locations = remoteLocationsIn(distances);
@@ -153,13 +168,14 @@ public class MazeUtilities {
 
     /* Returns if two nodes are adjacent. */
     private static boolean areAdjacent(MazeCell first, MazeCell second) {
-        return first.east  == second ||
-               first.west  == second ||
-               first.north == second ||
-               first.south == second;
+        return first.east == second ||
+                first.west == second ||
+                first.north == second ||
+                first.south == second;
     }
 
-    /* Uses the Floyd-Warshall algorithm to compute the shortest paths between all
+    /*
+     * Uses the Floyd-Warshall algorithm to compute the shortest paths between all
      * pairs of nodes in the maze. The result is a table where table[i][j] is the
      * shortest path distance between maze[i] and maze[j].
      */
@@ -186,7 +202,8 @@ public class MazeUtilities {
             }
         }
 
-        /* Dynamic programming step. Keep expanding paths by allowing for paths
+        /*
+         * Dynamic programming step. Keep expanding paths by allowing for paths
          * between nodes.
          */
         for (int i = 0; i < maze.size(); i++) {
@@ -202,7 +219,8 @@ public class MazeUtilities {
         return result;
     }
 
-    /* Given a list of distinct nodes, returns the "score" for their distances,
+    /*
+     * Given a list of distinct nodes, returns the "score" for their distances,
      * which is a sequence of numbers representing pairwise distances in sorted
      * order.
      */
@@ -218,30 +236,36 @@ public class MazeUtilities {
         Collections.sort(result);
         return result;
     }
-    
-    /* Lexicographical comparison of two arrays; they're assumed to have the same length. */
+
+    /*
+     * Lexicographical comparison of two arrays; they're assumed to have the same
+     * length.
+     */
     private static boolean lexicographicallyFollows(List<Integer> lhs, List<Integer> rhs) {
         for (int i = 0; i < lhs.size(); i++) {
-            if (lhs.get(i) != rhs.get(i)) return lhs.get(i) > rhs.get(i);
+            if (lhs.get(i) != rhs.get(i))
+                return lhs.get(i) > rhs.get(i);
         }
         return false;
     }
 
-    /* Given a grid, returns a combination of four nodes whose overall score
+    /*
+     * Given a grid, returns a combination of four nodes whose overall score
      * (sorted list of pairwise distances) is as large as possible in a
      * lexicographical sense.
      */
     private static int[] remoteLocationsIn(int[][] distances) {
-        int[] result = new int[]{0, 1, 2, 3};
+        int[] result = new int[] { 0, 1, 2, 3 };
 
-        /* We could do this recursively, but since it's "only" four loops
+        /*
+         * We could do this recursively, but since it's "only" four loops
          * we'll just do that instead. :-)
          */
         for (int i = 0; i < distances.length; i++) {
             for (int j = i + 1; j < distances.length; j++) {
                 for (int k = j + 1; k < distances.length; k++) {
                     for (int l = k + 1; l < distances.length; l++) {
-                        int[] curr = new int[]{ i, j, k, l };
+                        int[] curr = new int[] { i, j, k, l };
                         if (lexicographicallyFollows(scoreOf(curr, distances), scoreOf(result, distances))) {
                             result = curr;
                         }
@@ -255,12 +279,12 @@ public class MazeUtilities {
 
     /* Clears all the links between the given group of nodes. */
     private static void clearGraph(List<MazeCell> nodes) {
-        for (MazeCell node: nodes) {
+        for (MazeCell node : nodes) {
             node.whatsHere = "";
             node.north = node.south = node.east = node.west = null;
         }
     }
-    
+
     /* Enumerated type representing one of the four ports leaving a MazeCell. */
     private enum Port {
         NORTH,
@@ -269,21 +293,27 @@ public class MazeUtilities {
         WEST
     };
 
-    /* Returns a random unassigned link from the given node, or nullptr if
+    /*
+     * Returns a random unassigned link from the given node, or nullptr if
      * they are all assigned.
      */
     private static Port randomFreePortOf(MazeCell cell, Random generator) {
         List<Port> ports = new ArrayList<Port>();
-        if (cell.east  == null) ports.add(Port.EAST);
-        if (cell.west  == null) ports.add(Port.WEST);
-        if (cell.north == null) ports.add(Port.NORTH);
-        if (cell.south == null) ports.add(Port.SOUTH);
-        if (ports.isEmpty()) return null;
+        if (cell.east == null)
+            ports.add(Port.EAST);
+        if (cell.west == null)
+            ports.add(Port.WEST);
+        if (cell.north == null)
+            ports.add(Port.NORTH);
+        if (cell.south == null)
+            ports.add(Port.SOUTH);
+        if (ports.isEmpty())
+            return null;
 
         int port = generator.nextInt(ports.size());
         return ports.get(port);
     }
-    
+
     /* Links one MazeCell to the next using the specified port. */
     private static void link(MazeCell from, MazeCell to, Port link) {
         switch (link) {
@@ -304,7 +334,8 @@ public class MazeUtilities {
         }
     }
 
-    /* Use a variation of the Erdos-Renyi random graph model. We set the
+    /*
+     * Use a variation of the Erdos-Renyi random graph model. We set the
      * probability of any pair of nodes being connected to be ln(n) / n,
      * then artificially constrain the graph so that no node has degree
      * four or more. We generate mazes this way until we find one that's
@@ -324,7 +355,7 @@ public class MazeUtilities {
                     if (iLink == null || jLink == null) {
                         return false;
                     }
-                    
+
                     link(nodes.get(i), nodes.get(j), iLink);
                     link(nodes.get(j), nodes.get(i), jLink);
                 }
@@ -338,7 +369,7 @@ public class MazeUtilities {
     private static boolean isConnected(List<MazeCell> maze) {
         Set<MazeCell> visited = new HashSet<MazeCell>();
         Queue<MazeCell> frontier = new LinkedList<MazeCell>();
-        
+
         frontier.add(maze.get(0));
 
         while (!frontier.isEmpty()) {
@@ -347,17 +378,22 @@ public class MazeUtilities {
             if (!visited.contains(curr)) {
                 visited.add(curr);
 
-                if (curr.east  != null) frontier.add(curr.east);
-                if (curr.west  != null) frontier.add(curr.west);
-                if (curr.north != null) frontier.add(curr.north);
-                if (curr.south != null) frontier.add(curr.south);
+                if (curr.east != null)
+                    frontier.add(curr.east);
+                if (curr.west != null)
+                    frontier.add(curr.west);
+                if (curr.north != null)
+                    frontier.add(curr.north);
+                if (curr.south != null)
+                    frontier.add(curr.south);
             }
         }
 
         return visited.size() == maze.size();
     }
 
-    /* Generates a random twisty maze. This works by repeatedly generating
+    /*
+     * Generates a random twisty maze. This works by repeatedly generating
      * random graphs until a connected one is found.
      */
     private static List<MazeCell> makeTwistyMaze(int numNodes, Random generator) {
@@ -373,23 +409,23 @@ public class MazeUtilities {
 
         return result;
     }
-    
+
     /* Type representing an edge between two maze cells. */
     private static final class EdgeBuilder {
         MazeCell from;
         MazeCell to;
-        
+
         Port fromPort;
         Port toPort;
-        
+
         public EdgeBuilder(MazeCell from, MazeCell to, Port fromPort, Port toPort) {
-            this.from     = from;
-            this.to       = to;
+            this.from = from;
+            this.to = to;
             this.fromPort = fromPort;
-            this.toPort   = toPort;
+            this.toPort = toPort;
         }
     }
-    
+
     /* Returns all possible edges that could appear in a grid maze. */
     private static List<EdgeBuilder> allPossibleEdgesFor(MazeCell[][] maze) {
         List<EdgeBuilder> result = new ArrayList<EdgeBuilder>();
@@ -399,7 +435,7 @@ public class MazeUtilities {
                     result.add(new EdgeBuilder(maze[row][col], maze[row + 1][col], Port.SOUTH, Port.NORTH));
                 }
                 if (col + 1 < maze[row].length) {
-                    result.add(new EdgeBuilder(maze[row][col], maze[row][col + 1], Port.EAST,  Port.WEST));
+                    result.add(new EdgeBuilder(maze[row][col], maze[row][col + 1], Port.EAST, Port.WEST));
                 }
             }
         }
@@ -418,14 +454,15 @@ public class MazeUtilities {
     private static void shuffleEdges(List<EdgeBuilder> edges, Random generator) {
         for (int i = 0; i < edges.size(); i++) {
             int j = generator.nextInt(edges.size() - i) + i;
-            
+
             EdgeBuilder temp = edges.get(i);
             edges.set(i, edges.get(j));
             edges.set(j, temp);
         }
     }
 
-    /* Creates a random maze of the given size using a randomized Kruskal's
+    /*
+     * Creates a random maze of the given size using a randomized Kruskal's
      * algorithm. Edges are shuffled and added back in one at a time, provided
      * that each insertion links two disconnected regions.
      */
@@ -461,20 +498,21 @@ public class MazeUtilities {
             /* If not, link them. */
             if (rep1 != rep2) {
                 representatives.put(rep1, rep2);
-                
+
                 link(edge.from, edge.to, edge.fromPort);
                 link(edge.to, edge.from, edge.toPort);
 
                 edgesLeft--;
             }
         }
-        if (edgesLeft != 0) throw new RuntimeException("Edges remain?"); // Internal error!
+        if (edgesLeft != 0)
+            throw new RuntimeException("Edges remain?"); // Internal error!
 
         return maze;
     }
 
     /* Not meant to be instantiated. */
     private MazeUtilities() {
-    
+
     }
 }

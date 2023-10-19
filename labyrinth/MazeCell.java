@@ -8,6 +8,6 @@ public class MazeCell {
 
     public MazeCell north = null;
     public MazeCell south = null;
-    public MazeCell east  = null;
-    public MazeCell west  = null;
+    public MazeCell east = null;
+    public MazeCell west = null;
 }
