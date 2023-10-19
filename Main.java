@@ -7,7 +7,7 @@ public class Main {
      * do NOT edit the value of kYourName. Changing kYourName will change which
      * maze you get back, which might invalidate all your hard work!
      */
-    private static final String YOUR_NAME = "TODO: Replace this string with your name.";
+    private static final String YOUR_NAME = "Om and Eason";
 
     /* Change these constants to contain the paths out of your mazes. */
     private static final String PATH_OUT_OF_MAZE        = "TODO: Replace this string with your path out of the normal maze.";
